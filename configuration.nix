@@ -68,6 +68,7 @@
   users.users.radxa = {
     isNormalUser = true;
     description = "radxa";
+    password = "radxa";
     extraGroups = [
       "networkmanager"
       "wheel"
@@ -81,7 +82,7 @@
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
-  
+
   # Disable docs to fix libmanette build
   nixpkgs.config.packageOverrides = pkgs: {
     libmanette = pkgs.libmanette.override {

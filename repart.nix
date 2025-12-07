@@ -5,6 +5,9 @@
   modulesPath,
   ...
 }:
+let 
+  efiArch = pkgs.stdenv.hostPlatform.efiArch;
+in
 {
   imports = [
     "${modulesPath}/image/repart.nix"
@@ -23,18 +26,15 @@
   };
 
   hardware.deviceTree.enable = true;
-  hardware.deviceTree.name = "rockchip/rk3588-rock-5t";
+  hardware.deviceTree.name = "rockchip/rk3588-rock-5t.dtb";
 
   image.repart = {
     name = "image";
     partitions = {
       "01-esp" = {
         contents = {
-          "/u-boot.itb".source = "${pkgs.ubootRock5T}/u-boot.itb";
-          "/idbloader.img".source = "${pkgs.ubootRock5T}/idbloader.img";
-          "/u-boot-rockchip.bin".source = "${pkgs.ubootRock5T}/u-boot-rockchip.bin";
-          "/u-boot-rockchip-spi.bin".source = "${pkgs.ubootRock5T}/u-boot-rockchip-spi.bin";
-          "/u-boot.bin".source = "${pkgs.ubootRock5T}/u-boot.bin";
+          "/EFI/BOOT/BOOT${lib.toUpper efiArch}.EFI".source = "${pkgs.systemd}/lib/systemd/boot/efi/systemd-boot${efiArch}.efi";
+          "/EFI/Linux/${config.system.boot.loader.ukiFile}".source = "${config.system.build.uki}/${config.system.boot.loader.ukiFile}";
         };
         repartConfig = {
           Type = "esp";

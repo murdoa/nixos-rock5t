@@ -26,5 +26,5 @@ buildUBoot {
   patches = [
     ./0001-add-rock-5t-rk3588_defconfig.patch
   ];
-  extraPatches = [];
+  extraPatches = [ ];
 }
