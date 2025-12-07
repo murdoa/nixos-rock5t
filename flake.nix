@@ -62,6 +62,8 @@
       packages.x86_64-linux.u-boot = pkgs-x86.ubootRock5T;
       packages.aarch64-linux.u-boot = pkgs-aarch64.ubootRock5T;
 
+      packages.x86_64-linux.flash = (pkgs.callPackage ./pkgs/flash { targetPkgs = if system == "x86_64-linux" then pkgs-x86 else pkgs-aarch64; }).flash;
+
       devShells.x86_64-linux.default = pkgs.mkShell {
         packages = with pkgs; [
           rkdeveloptool
