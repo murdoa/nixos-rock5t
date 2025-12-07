@@ -1,49 +1,55 @@
 {
-  description = "NixOS flake";
+  description = "NixOS flake for Radxa Rock 5T SBC";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+    flake-utils.url = "github:numtide/flake-utils";
+    ssh-keys = {
+      url = "https://github.com/murdoa.keys";
+      flake = false;
+    };
   };
 
   outputs =
     {
       self,
       nixpkgs,
+      flake-utils,
+      ssh-keys,
       ...
     }@inputs:
-    let
-      lib = nixpkgs.lib;
-      system = "x86_64-linux";
-      pkgs = import nixpkgs {
-        inherit system;
-        config.allowUnfree = true;
-      };
-
-      # Create pkgs instances with overlay for both architectures
-      pkgs-x86 = import nixpkgs {
-        system = "x86_64-linux";
-        config.allowUnfree = true;
-        overlays = [ self.overlays.default ];
-        crossSystem.system = "aarch64-linux";
-      };
-
-      pkgs-aarch64 = import nixpkgs {
-        system = "aarch64-linux";
-        config.allowUnfree = true;
-        overlays = [ self.overlays.default ];
-      };
-    in
     {
       overlays.default = final: prev: {
         ubootRock5T = prev.callPackage ./pkgs/u-boot { };
       };
+    }
+    // flake-utils.lib.eachDefaultSystem (
+      system:
+      let
+        lib = nixpkgs.lib;
 
-      nixosConfigurations = {
-        rock-5t = nixpkgs.lib.nixosSystem {
+        pkgs = import nixpkgs {
+          inherit system;
+          config.allowUnfree = true;
+        };
+
+        # Create pkgs instances with overlay for all architectures
+        pkgsCross =
+          if system == "aarch64-linux" then
+            pkgs
+          else
+            import nixpkgs {
+              system = system;
+              config.allowUnfree = true;
+              overlays = [ self.overlays.default ];
+              crossSystem.system = "aarch64-linux";
+            };
+
+        nixosConfig = nixpkgs.lib.nixosSystem {
           system = "aarch64-linux";
           modules = [
             {
-              nixpkgs.localSystem.system = "x86_64-linux";
+              nixpkgs.localSystem.system = system;
               nixpkgs.crossSystem.system = "aarch64-linux";
               nixpkgs.overlays = [ self.overlays.default ];
             }
@@ -52,22 +58,30 @@
             "${nixpkgs}/nixos/modules/profiles/minimal.nix"
           ];
           specialArgs = {
+            inherit ssh-keys;
           };
         };
-      };
+      in
+      {
+        nixosConfigurations = {
+          rock-5t = nixosConfig;
+        };
 
-      packages.x86_64-linux.default = self.nixosConfigurations.rock-5t.config.system.build.image;
-      packages.aarch64-linux.default = self.nixosConfigurations.rock-5t.config.system.build.image;
+        packages = rec {
+          image = nixosConfig.config.system.build.image;
+          u-boot = pkgsCross.ubootRock5T;
+        }
+        // (pkgs.callPackage ./pkgs/flash {
+          inherit pkgsCross;
+          inherit nixosConfig;
+        });
 
-      packages.x86_64-linux.u-boot = pkgs-x86.ubootRock5T;
-      packages.aarch64-linux.u-boot = pkgs-aarch64.ubootRock5T;
-
-      packages.x86_64-linux.flash = (pkgs.callPackage ./pkgs/flash { targetPkgs = if system == "x86_64-linux" then pkgs-x86 else pkgs-aarch64; }).flash;
-
-      devShells.x86_64-linux.default = pkgs.mkShell {
-        packages = with pkgs; [
-          rkdeveloptool
-        ];
-      };
-    };
+        devShells.default = pkgs.mkShell {
+          packages = with pkgs; [
+            pv
+            rkdeveloptool
+          ];
+        };
+      }
+    );
 }

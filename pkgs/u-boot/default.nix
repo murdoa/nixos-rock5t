@@ -22,6 +22,9 @@ buildUBoot {
     "u-boot-rockchip.bin"
     "u-boot-rockchip-spi.bin"
   ];
+  extraConfig = ''
+    CONFIG_MISC_INIT_R=y
+  '';
   # Override patches to exclude Raspberry Pi specific patches
   patches = [
     ./0001-add-rock-5t-rk3588_defconfig.patch

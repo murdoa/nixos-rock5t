@@ -1,17 +1,18 @@
 {
   pkgs,
-  targetPkgs,
+  pkgsCross,
+  nixosConfig,
   ...
 }:
-let 
+let
   system = pkgs.stdenv.hostPlatform.system;
   rkdeveloptool = pkgs.rkdeveloptool;
-  u-boot = targetPkgs.ubootRock5T;
+  u-boot = pkgsCross.ubootRock5T;
+  pv = pkgs.pv;
 in
 rec {
 
-
-  flash = pkgs.writeShellScriptBin "flash" ''
+  flash-uboot = pkgs.writeShellScriptBin "flash" ''
     #!/usr/bin/env bash
     set -e
     printf "Flashing U-Boot to Rock 5T...\nEnsure command is run with permissions to access rk board.\n\n"
@@ -30,12 +31,38 @@ rec {
     printf "\nErasing SPI Flash\n"
     ${rkdeveloptool}/bin/rkdeveloptool cs 9
     ${rkdeveloptool}/bin/rkdeveloptool ef
-    
+
     printf "\nUploading U-Boot Image...\n"
     ${rkdeveloptool}/bin/rkdeveloptool wl 0 ${u-boot}/u-boot-rockchip-spi.bin
 
     printf "\nU-Boot successfully flashed to Rock 5T.\n"
     printf "Resetting.\n"
     ${rkdeveloptool}/bin/rkdeveloptool rd
+  '';
+
+  flash-sd = pkgs.writeShellScriptBin "flash-sd" ''
+    #!/usr/bin/env bash
+    set -e
+    printf "Flashing U-Boot to SD Card for Rock 5T...\n"
+    printf "Ensure the SD card is inserted and identify the device path (e.g., /dev/sdX).\n\n"
+
+    if [ -z "$1" ]; then
+      printf "Usage: flash-sd <device-path>\n"
+      exit 1
+    fi
+
+    DEVICE_PATH="$1"
+
+    printf "Warning: This will overwrite data on $DEVICE_PATH. Proceed? (y/n): "
+    read -r CONFIRM
+    if [ "$CONFIRM" != "y" ]; then
+      printf "Aborting.\n"
+      exit 1
+    fi
+
+    printf "Writing U-Boot to $DEVICE_PATH...\n"
+    ${pv}/bin/pv ${nixosConfig.config.system.build.image}/image.raw | sudo dd of=$DEVICE_PATH bs=4M oflag=sync
+
+    printf "U-Boot successfully written to $DEVICE_PATH.\n"
   '';
 }
