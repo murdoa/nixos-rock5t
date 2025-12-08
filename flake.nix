@@ -59,8 +59,8 @@
               nixpkgs.overlays = [ self.overlays.default ];
             }
             ./configuration.nix
-            ./repart.nix
             "${nixpkgs}/nixos/modules/profiles/minimal.nix"
+            "${nixpkgs}/nixos/modules/installer/sd-card/sd-image.nix"
           ];
           specialArgs = {
             inherit ssh-keys radxa-overlays;
@@ -75,8 +75,8 @@
         packages = rec {
           os = nixosConfig.config.system.build.toplevel;
           kernel = nixosConfig.config.system.build.kernel;
-          image = nixosConfig.config.system.build.image;
           u-boot = pkgsCross.ubootRock5T;
+          image = nixosConfig.config.system.build.sdImage;
         }
         // (pkgs.callPackage ./pkgs/flash {
           inherit pkgsCross;
