@@ -107,6 +107,8 @@
     ];
   };
 
+  hardware.graphics.enable = true;
+
   networking.hostName = "rock-5t"; # Define your hostname.
 
   # Enable networking
@@ -206,6 +208,9 @@
   # $ nix search wget
   environment.systemPackages = with pkgs; [
     vim
+    libdrm
+    kmscube
+    evtest
   ];
 
   # This value determines the NixOS release from which the default
