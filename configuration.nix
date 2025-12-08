@@ -17,10 +17,27 @@
 
   nix.settings.require-sigs = false;
 
+  boot.loader = {
+    generic-extlinux-compatible.enable = lib.mkForce true;
+    grub.enable = lib.mkForce false;
+    efi.canTouchEfiVariables = false;
+  };
+
+
+  sdImage = {
+    compressImage = false;
+    populateFirmwareCommands = '''';
+    populateRootCommands = ''
+      mkdir -p ./files/boot/
+      ${config.boot.loader.generic-extlinux-compatible.populateCmd} -c ${config.system.build.toplevel} -d ./files/boot/
+    '';
+  };
+
   # Use latest kernel.
   boot.kernelPackages = pkgs.linuxPackages_latest;
-
-  boot.initrd.kernelModules = [
+  
+  # https://wiki.nixos.org/wiki/NixOS_on_ARM/Radxa_ROCK_5_ITX
+  boot.initrd.kernelModules =  [
     # Rockchip modules
     "rockchip_rga"
     "rockchip_saradc"
@@ -61,27 +78,31 @@
 
   boot.kernelPatches = [
     {
-        name = "add-radxa-display-10fhd-ad003-support";
-        patch = ./kernel-patches/0001-add-radxa-display-10fhd-ad003-support.patch;
-        structuredExtraConfig = with lib.kernel; {
-          DRM_PANEL_ORISETECH_OTA7290B = module;
-        };
+      name = "add-radxa-display-10fhd-ad003-support";
+      patch = ./kernel-patches/0001-add-radxa-display-10fhd-ad003-support.patch;
+      structuredExtraConfig = with lib.kernel; {
+        ROCKCHIP_DW_MIPI_DSI = yes;
+        ROCKCHIP_DW_MIPI_DSI2 = yes;
+        PHY_ROCKCHIP_SAMSUNG_DCPHY = yes;
+        DRM_PANEL_ORISETECH_OTA7290B = module;
+      };
     }
   ];
 
+  hardware.enableRedistributableFirmware = true;
   hardware.deviceTree = {
     enable = true;
     name = "rockchip/rk3588-rock-5t.dtb";
+    filter = "*rock-5t*";
     dtboBuildExtraIncludePaths = [
       "${radxa-overlays}/arch/arm64/boot/dts/rockchip/overlays/"
       "${lib.getDev config.hardware.deviceTree.kernelPackage}/lib/modules/${config.hardware.deviceTree.kernelPackage.modDirVersion}/source/include"
     ];
     overlays = [
       {
-        name = "rock-5t-radxa-display-10fhd";
+        name = "overlay-rock-5t-radxa-display-10fhd";
         # dtsFile = "${radxa-overlays}/arch/arm64/boot/dts/rockchip/overlays/rock-5t-radxa-display-10fhd.dts";
         dtsFile = ./dt-overlays/rock-5t-radxa-display-10fhd.dts;
-        filter = "rockchip/rk3588-rock-5t.dtb";
       }
     ];
   };
@@ -168,6 +189,12 @@
       withIntrospection = false;
     };
   };
+
+  # Disable ZFS support
+  boot.supportedFilesystems = lib.mkForce [
+    "ext4"
+    "vfat"
+  ];
 
   # Enable the Flakes feature and the accompanying new nix command-line tool
   nix.settings.experimental-features = [
