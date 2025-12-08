@@ -4,6 +4,10 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
     flake-utils.url = "github:numtide/flake-utils";
+    radxa-overlays = {
+      url = "github:radxa-pkg/radxa-overlays";
+      flake = false;
+    };
     ssh-keys = {
       url = "https://github.com/murdoa.keys";
       flake = false;
@@ -16,6 +20,7 @@
       nixpkgs,
       flake-utils,
       ssh-keys,
+      radxa-overlays,
       ...
     }@inputs:
     {
@@ -58,7 +63,7 @@
             "${nixpkgs}/nixos/modules/profiles/minimal.nix"
           ];
           specialArgs = {
-            inherit ssh-keys;
+            inherit ssh-keys radxa-overlays;
           };
         };
       in
@@ -68,6 +73,8 @@
         };
 
         packages = rec {
+          os = nixosConfig.config.system.build.toplevel;
+          kernel = nixosConfig.config.system.build.kernel;
           image = nixosConfig.config.system.build.image;
           u-boot = pkgsCross.ubootRock5T;
         }

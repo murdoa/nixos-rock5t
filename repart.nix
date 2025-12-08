@@ -25,9 +25,6 @@ in
     grub.enable = lib.mkForce false;
   };
 
-  hardware.deviceTree.enable = true;
-  hardware.deviceTree.name = "rockchip/rk3588-rock-5t.dtb";
-
   image.repart = {
     name = "image";
     partitions = {

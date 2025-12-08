@@ -4,14 +4,18 @@
 
 {
   config,
+  lib,
   pkgs,
   ssh-keys,
+  radxa-overlays,
   ...
 }:
 
 {
   imports = [
   ];
+
+  nix.settings.require-sigs = false;
 
   # Use latest kernel.
   boot.kernelPackages = pkgs.linuxPackages_latest;
@@ -54,6 +58,33 @@
     "console=ttyS2,1500000" # serial port
     "console=tty1" # HDMI
   ];
+
+  boot.kernelPatches = [
+    {
+        name = "add-radxa-display-10fhd-ad003-support";
+        patch = ./kernel-patches/0001-add-radxa-display-10fhd-ad003-support.patch;
+        structuredExtraConfig = with lib.kernel; {
+          DRM_PANEL_ORISETECH_OTA7290B = module;
+        };
+    }
+  ];
+
+  hardware.deviceTree = {
+    enable = true;
+    name = "rockchip/rk3588-rock-5t.dtb";
+    dtboBuildExtraIncludePaths = [
+      "${radxa-overlays}/arch/arm64/boot/dts/rockchip/overlays/"
+      "${lib.getDev config.hardware.deviceTree.kernelPackage}/lib/modules/${config.hardware.deviceTree.kernelPackage.modDirVersion}/source/include"
+    ];
+    overlays = [
+      {
+        name = "rock-5t-radxa-display-10fhd";
+        # dtsFile = "${radxa-overlays}/arch/arm64/boot/dts/rockchip/overlays/rock-5t-radxa-display-10fhd.dts";
+        dtsFile = ./dt-overlays/rock-5t-radxa-display-10fhd.dts;
+        filter = "rockchip/rk3588-rock-5t.dtb";
+      }
+    ];
+  };
 
   networking.hostName = "rock-5t"; # Define your hostname.
 

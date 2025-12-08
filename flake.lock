@@ -34,10 +34,27 @@
         "type": "github"
       }
     },
+    "radxa-overlays": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1764927344,
+        "narHash": "sha256-08AfX+c+i3dIHtV4pmuVkjRn13tjnuT3q99paHxwDz4=",
+        "owner": "radxa-pkg",
+        "repo": "radxa-overlays",
+        "rev": "24e7912ecc38c4172b23983e9605abb5e1e85d84",
+        "type": "github"
+      },
+      "original": {
+        "owner": "radxa-pkg",
+        "repo": "radxa-overlays",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "flake-utils": "flake-utils",
         "nixpkgs": "nixpkgs",
+        "radxa-overlays": "radxa-overlays",
         "ssh-keys": "ssh-keys"
       }
     },
