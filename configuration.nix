@@ -99,10 +99,15 @@
       "${lib.getDev config.hardware.deviceTree.kernelPackage}/lib/modules/${config.hardware.deviceTree.kernelPackage.modDirVersion}/source/include"
     ];
     overlays = [
+      # {
+      #   name = "overlay-rock-5t-radxa-display-10fhd";
+      #   # dtsFile = "${radxa-overlays}/arch/arm64/boot/dts/rockchip/overlays/rock-5t-radxa-display-10fhd.dts";
+      #   dtsFile = ./dt-overlays/rock-5t-radxa-display-10fhd.dts;
+      # }
       {
-        name = "overlay-rock-5t-radxa-display-10fhd";
+        name = "overlay-rock-5t-radxa-display-10fhd-mainline";
         # dtsFile = "${radxa-overlays}/arch/arm64/boot/dts/rockchip/overlays/rock-5t-radxa-display-10fhd.dts";
-        dtsFile = ./dt-overlays/rock-5t-radxa-display-10fhd.dts;
+        dtsFile = ./dt-overlays/rock-5t-radxa-display-10fhd-mainline.dts;
       }
     ];
   };
